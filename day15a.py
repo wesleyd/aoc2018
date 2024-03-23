@@ -7,10 +7,6 @@ from collections import deque, namedtuple
 from dataclasses import dataclass
 from heapdict import heapdict
 
-def say(*args):
-    pass
-    #print(*args)
-
 XY = namedtuple('XY', ['x', 'y'])
 up    = lambda p: XY(p.x,   p.y - 1)
 down  = lambda p: XY(p.x,   p.y + 1)
@@ -79,7 +75,6 @@ class Game:
         n = 0
         for v in self.occupied.values():
             if v != u and u.c != v.c:
-                say(f'    Enemy of {u}: {v}')
                 yield v
                 n += 1
         if not n:
@@ -98,7 +93,6 @@ class Game:
             # Sort by lowest hp, then start-of-round order
             heapq.heappush(candidates, (v.hp, v.i, v))
         if candidates:
-            say(f'  {u} tastiest: {v}')
             return candidates[0][2]
         return None
             
@@ -107,10 +101,8 @@ class Game:
         v = self.tastiest(u)
         if not v:  # Nobody to attack
             return False
-        print(f'{u} attacks {v}')
         v.hp -= u.ap
         if v.hp <= 0:
-            print(f'{u} killed {v}')
             del self.occupied[v.p]
             v.p = None
         return True
@@ -128,7 +120,6 @@ class Game:
             for d in [up(e.p), down(e.p), left(e.p), right(e.p)]:
                 if self.at(d) == '.':
                     goals.add(d)
-        say(f'   {len(goals)} goals: {goals}')
         # Search goals for the closest and topleftiest
         prev = set()
         future = heapdict()
@@ -138,7 +129,6 @@ class Game:
         while future:
             p, d = future.popitem()
             prev.add(p)
-            say(f'     Visiting {p}, {p in goals} {best_goals=}')
             for q in [up(p), left(p), right(p), down(p)]:
                 if q in prev or q in future or self.at(q) != '.':
                     continue
@@ -149,13 +139,10 @@ class Game:
                 heapq.heappush(best_goals, (p.y, p.x))
                 assert d <= best_distance, (d, best_distance)
                 best_distance = d
-        say(f'    {best_goals=}')
         if not best_goals:
-            say('    Nope, no best_goals')
             # There is nowhere to move to!
             return
         y, x = best_goals[0]
-        say(f'    Best adjacency is {x}, {y}')
         return XY(x,y)
 
     def shortest_distance(self, a, z):
@@ -176,19 +163,16 @@ class Game:
     def best_move(self, u):
         """Returns the best move u can make."""
         goal = self.best_enemy_adjacency(u)
-        say(f'     best adjacency: {goal=}')
         if not goal:
             return None
         shortest_start = None
         shortest = math.inf
         # Which of u/l/r/d gives shortest path to goal? (Tie => first of ULRD)
         for p in [up(u.p), left(u.p), right(u.p), down(u.p)]:  # Note order!
-            say(f'     Starting from {p}?')
             if self.at(p) != '.':
                 continue
             d = self.shortest_distance(p, goal)
             if d is None:
-                say(f'    {goal} is unreachable from {p}')
                 continue
             d += 1  # We started from one step away
             if d < shortest:
@@ -198,37 +182,28 @@ class Game:
 
     def move(self, u):
         if self.attack(u):
-            say('   it attacked first! And done.')
             return True
         q = self.best_move(u)
-        say(f'    best_move => {q=}')
         if q:
             assert u == self.occupied[u.p], (u, self.occupied[u.p])
             del self.occupied[u.p]
-            say(f'   best move was {u.p} to {q}')
             u.p = q
             self.occupied[u.p] = u
-        else:
-            say('   no best move')
         return self.attack(u)
             
     def turn(self):
-        say(f'Turn {self.tn}...')
         units = list(self.occupied.values())
         units.sort(key=lambda u: (u.p.y, u.p.x))
         for i, u in enumerate(units):
             u.i = i
         for u in units:
-            say(f'{u}...?')
             if not u.alive():
                 continue
-            say(f'  alive, moving to...')
             self.move(u)
-            say(f'  ...moving to {u.p}')
         self.tn += 1
-        print(f'After {self.tn} round(s):')
-        print(self)
-        print()
+        #print(f'After {self.tn} round(s):')
+        #print(self)
+        #print()
 
     def play(self):
         while True:
@@ -239,7 +214,6 @@ class Game:
                 for u in self.occupied.values():
                     assert u.hp > 0, u
                     hp_remaining += u.hp
-                print(f'{hp_remaining=}, {self.tn=}')
                 return hp_remaining * self.tn
 
                 
