@@ -39,13 +39,8 @@ class Grid:
                 assert 'x' == m.group(3)
                 for x in range(int(m.group(4)), int(m.group(5))+1):
                     self.g[Point(x,y)] = '#'
-        self.minx, self.maxx = math.inf, -math.inf
         self.miny, self.maxy = math.inf, -math.inf
         for p in self.g:
-            if p.x < self.minx:
-                self.minx = p.x
-            if p.x > self.maxx:
-                self.maxx = p.x
             if p.y < self.miny:
                 self.miny = p.y
             if p.y > self.maxy:
@@ -57,27 +52,33 @@ class Grid:
         return self.g.get(p, '.')
 
     def draw(self):
+        minx, maxx = math.inf, -math.inf
+        for p in self.g:
+            if p.x < minx:
+                minx = p.x
+            if p.x > maxx:
+                maxx = p.x
         lines = []
         for y in range(self.miny, self.maxy+1):
             line = []
-            for x in range(self.minx, self.maxx+1):
+            for x in range(minx, maxx+1):
                 line.append(self.at(Point(x,y)))
             lines.append(''.join(line))
         return '\n'.join(lines)
 
     def drain_left(self, p):
         """Returns watery point leftmost of p, and whether it drains."""
-        while self.at(l := left(p)) == '.':
+        while self.at(l := left(p)) in '.|':
             p = l
-            if self.at(down(p)) == '.':
+            if self.at(down(p)) in '.|':
                 return p, True
         return p, False
 
     def drain_right(self, p):
         """Returns watery point rightmost of p, and whether it drains."""
-        while self.at(r := right(p)) == '.':
+        while self.at(r := right(p)) in '.|':
             p = r
-            if self.at(down(p)) == '.':
+            if self.at(down(p)) in '.|':
                 return p, True
         return p, False
 
@@ -118,6 +119,5 @@ with open('inputs/day17.input.txt') as f:
     real_input = f.read()
 g = Grid(real_input)
 g.fill()
-#print(g.count())  # 30426 is too low
-
-print(g.draw())
+#print(g.draw())
+print(g.count())  # => 33052
